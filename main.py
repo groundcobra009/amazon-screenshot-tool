@@ -73,20 +73,29 @@ class KindleScreenshotApp:
             row=4, column=1, sticky="w"
         )
 
+        # 撮影ページ数
+        ttk.Label(frame, text="撮影ページ数:").grid(row=5, column=0, sticky="w", pady=5)
+        page_frame = ttk.Frame(frame)
+        page_frame.grid(row=5, column=1, sticky="w", pady=5)
+        self.max_pages_var = tk.StringVar(value="100")
+        max_pages_entry = ttk.Entry(page_frame, textvariable=self.max_pages_var, width=8)
+        max_pages_entry.pack(side="left")
+        ttk.Label(page_frame, text=" ページ（0=自動停止）", font=("Helvetica", 10)).pack(side="left")
+
         # 待機時間
-        ttk.Label(frame, text="ページ送り待機(秒):").grid(row=5, column=0, sticky="w", pady=5)
+        ttk.Label(frame, text="ページ送り待機(秒):").grid(row=6, column=0, sticky="w", pady=5)
         self.wait_var = tk.StringVar(value="1.5")
         wait_entry = ttk.Entry(frame, textvariable=self.wait_var, width=8)
-        wait_entry.grid(row=5, column=1, sticky="w", pady=5)
+        wait_entry.grid(row=6, column=1, sticky="w", pady=5)
 
         # テスト撮影モード
         self.test_mode_var = tk.BooleanVar(value=False)
         test_check = ttk.Checkbutton(frame, text="テスト撮影（5枚のみ）", variable=self.test_mode_var)
-        test_check.grid(row=6, column=0, columnspan=2, sticky="w", pady=5)
+        test_check.grid(row=7, column=0, columnspan=2, sticky="w", pady=5)
 
         # ボタン
         btn_frame = ttk.Frame(frame)
-        btn_frame.grid(row=7, column=0, columnspan=2, pady=15)
+        btn_frame.grid(row=8, column=0, columnspan=2, pady=10)
 
         self.start_btn = ttk.Button(btn_frame, text="撮影開始", command=self._on_start)
         self.start_btn.pack(side="left", padx=5)
@@ -94,24 +103,78 @@ class KindleScreenshotApp:
         self.stop_btn = ttk.Button(btn_frame, text="停止", command=self._on_stop, state="disabled")
         self.stop_btn.pack(side="left", padx=5)
 
+        # 使い方ガイド
+        guide_sep = ttk.Separator(frame, orient="horizontal")
+        guide_sep.grid(row=9, column=0, columnspan=2, sticky="ew", pady=5)
+
+        guide_toggle = ttk.Button(frame, text="使い方ガイド ▼", command=self._toggle_guide)
+        guide_toggle.grid(row=10, column=0, columnspan=2, sticky="w")
+        self.guide_toggle_btn = guide_toggle
+
+        self.guide_frame = ttk.Frame(frame)
+        self.guide_frame.grid(row=11, column=0, columnspan=2, sticky="ew")
+        self.guide_visible = False
+
+        guide_text = (
+            "【準備】\n"
+            "  1. Amazon Kindleで本を開く\n"
+            "  2. Kindleをフルスクリーンにする\n"
+            "     (メニュー「表示」→「フルスクリーン」\n"
+            "      または Cmd+Ctrl+F)\n"
+            "  3. 最初のページ（表紙）に移動\n"
+            "\n"
+            "【設定のコツ】\n"
+            "  ・横書き本 → 左めくり（→で次ページ）\n"
+            "  ・縦書き本 → 右めくり（←で次ページ）\n"
+            "  ・画像多めの本 → 待機時間を2〜3秒に\n"
+            "  ・ページ数不明 → 0で自動停止\n"
+            "\n"
+            "【初回は必ずテスト撮影で確認！】\n"
+            "  「テスト撮影」にチェック → 5枚で停止\n"
+            "  screenshots/フォルダで画像を確認\n"
+            "\n"
+            "【権限エラーの場合】\n"
+            "  システム設定 → プライバシーとセキュリティ\n"
+            "  → アクセシビリティ & 画面収録\n"
+            "  → ターミナルを許可（変更後は再起動）"
+        )
+        self.guide_label = tk.Text(
+            self.guide_frame, width=42, height=20,
+            font=("Menlo", 10), bg="#2a2a2a", fg="#cccccc",
+            relief="flat", padx=8, pady=8, wrap="word"
+        )
+        self.guide_label.insert("1.0", guide_text)
+        self.guide_label.config(state="disabled")
+        # 初期は非表示
+        self.guide_frame.grid_remove()
+
         # ステータス
-        sep = ttk.Separator(frame, orient="horizontal")
-        sep.grid(row=8, column=0, columnspan=2, sticky="ew", pady=5)
+        status_sep = ttk.Separator(frame, orient="horizontal")
+        status_sep.grid(row=12, column=0, columnspan=2, sticky="ew", pady=5)
 
         self.status_var = tk.StringVar(value="待機中")
-        ttk.Label(frame, text="状態:").grid(row=9, column=0, sticky="w")
+        ttk.Label(frame, text="状態:").grid(row=13, column=0, sticky="w")
         ttk.Label(frame, textvariable=self.status_var, font=("Helvetica", 11, "bold")).grid(
-            row=9, column=1, sticky="w"
+            row=13, column=1, sticky="w"
         )
 
         self.page_var = tk.StringVar(value="0")
-        ttk.Label(frame, text="ページ数:").grid(row=10, column=0, sticky="w")
-        ttk.Label(frame, textvariable=self.page_var).grid(row=10, column=1, sticky="w")
+        ttk.Label(frame, text="ページ数:").grid(row=14, column=0, sticky="w")
+        ttk.Label(frame, textvariable=self.page_var).grid(row=14, column=1, sticky="w")
 
         # ログ
-        ttk.Label(frame, text="ログ:").grid(row=11, column=0, sticky="nw", pady=(10, 0))
+        ttk.Label(frame, text="ログ:").grid(row=15, column=0, sticky="nw", pady=(10, 0))
         self.log_text = tk.Text(frame, width=40, height=10, state="disabled", font=("Menlo", 10))
-        self.log_text.grid(row=11, column=1, pady=(10, 0), sticky="w")
+        self.log_text.grid(row=15, column=1, pady=(10, 0), sticky="w")
+
+    def _toggle_guide(self):
+        if self.guide_visible:
+            self.guide_frame.grid_remove()
+            self.guide_toggle_btn.config(text="使い方ガイド ▼")
+        else:
+            self.guide_frame.grid()
+            self.guide_toggle_btn.config(text="使い方ガイド ▲")
+        self.guide_visible = not self.guide_visible
 
     def _log(self, msg: str):
         self.root.after(0, self._append_log, msg)
@@ -163,6 +226,11 @@ class KindleScreenshotApp:
 
         self.test_mode = self.test_mode_var.get()
 
+        try:
+            self.max_pages = int(self.max_pages_var.get())
+        except ValueError:
+            self.max_pages = 0
+
         # UI状態変更
         self.running = True
         self.stop_requested = False
@@ -196,10 +264,21 @@ class KindleScreenshotApp:
             no_change_count = 0
             prev_path = None
 
+            # ページ上限を決定
+            if self.test_mode:
+                page_limit = 5
+                self._log("テスト撮影モード（5枚）")
+            elif self.max_pages > 0:
+                page_limit = self.max_pages
+                self._log(f"撮影上限: {page_limit}ページ")
+            else:
+                page_limit = 0  # 0=無制限（自動停止のみ）
+                self._log("自動停止モード（変化なしで停止）")
+
             while not self.stop_requested:
-                # テストモード: 5枚で停止
-                if self.test_mode and page_num > 5:
-                    self._log("テスト撮影完了（5枚）")
+                # ページ上限チェック
+                if page_limit > 0 and page_num > page_limit:
+                    self._log(f"指定ページ数({page_limit})に到達。撮影完了。")
                     break
 
                 current_path = get_screenshot_path(config.book_screenshot_dir, page_num)
