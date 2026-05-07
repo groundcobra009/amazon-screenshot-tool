@@ -27,7 +27,7 @@ def find_kindle_window() -> bool:
 def activate_kindle():
     """Kindleウィンドウをアクティブにする"""
     script = '''
-    tell application "Kindle"
+    tell application "Amazon Kindle"
         activate
     end tell
     '''
