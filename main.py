@@ -288,15 +288,24 @@ class KindleScreenshotApp:
 
                 if prev_path and prev_path.exists():
                     if images_are_same(prev_path, current_path, config.change_threshold):
-                        no_change_count += 1
-                        self._log(f"  変化なし ({no_change_count}/{config.no_change_limit})")
-                        if no_change_count >= config.no_change_limit:
-                            for i in range(no_change_count):
-                                dup = get_screenshot_path(config.book_screenshot_dir, page_num - i)
-                                if dup.exists():
-                                    dup.unlink()
-                            self._log("最終ページ検出。撮影完了。")
-                            break
+                        # 描画が間に合っていない可能性 → 待ってから再撮影
+                        self._log("  変化なし → 再確認中...")
+                        time.sleep(1.5)
+                        capture_kindle_window(current_path)
+
+                        if images_are_same(prev_path, current_path, config.change_threshold):
+                            no_change_count += 1
+                            self._log(f"  変化なし確定 ({no_change_count}/{config.no_change_limit})")
+                            if no_change_count >= config.no_change_limit:
+                                for i in range(no_change_count):
+                                    dup = get_screenshot_path(config.book_screenshot_dir, page_num - i)
+                                    if dup.exists():
+                                        dup.unlink()
+                                self._log("最終ページ検出。撮影完了。")
+                                break
+                        else:
+                            self._log("  ページ描画完了 → 続行")
+                            no_change_count = 0
                     else:
                         no_change_count = 0
 

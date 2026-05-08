@@ -19,7 +19,7 @@ class Config:
     # 変化なし判定の閾値（ピクセル差分の割合）
     change_threshold: float = 0.001
     # 変化なし連続回数で停止
-    no_change_limit: int = 2
+    no_change_limit: int = 3
 
     @property
     def book_screenshot_dir(self) -> Path:
